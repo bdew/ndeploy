@@ -1,36 +1,37 @@
-use anyhow::Context;
 use anyhow::Result;
-use std::path::Path;
-use tokio::process::Command;
+use clap::Parser;
+use std::process::ExitCode;
 
-use crate::run_util::run_command;
-
+mod args;
+mod commands;
 mod config;
 mod run_util;
 
 #[tokio::main(flavor = "current_thread")]
-async fn main() -> Result<()> {
-    let config = config::CfgObj::load("config.yaml")?;
-    println!("{config:#?}");
+async fn main() -> Result<ExitCode> {
+    let args = args::Args::parse();
 
-    let flake_path =
-        Path::canonicalize(Path::new(&config.flake_path)).context("Error getting flake path")?;
+    if (!args.build && !args.update) && args.hosts.is_empty() {
+        eprintln!("Error: No hosts specified and neither build nor update is requested.");
+        return Ok(ExitCode::FAILURE);
+    }
 
-    println!("Flake path: {flake_path:?}");
+    let config = config::CfgObj::load(args.config)?;
 
-    let mut cmd = Command::new("nix");
-    cmd.arg("flake");
-    cmd.arg("update");
-    cmd.arg("--flake");
-    cmd.arg(flake_path.clone());
+    for host in &args.hosts {
+        if !config.hosts.contains_key(host) {
+            eprintln!("Error: Host '{host}' not found in config.");
+            return Ok(ExitCode::FAILURE);
+        }
+    }
 
-    run_command("update", cmd).await?;
+    if args.update {
+        commands::run_update(&config).await?;
+    }
 
-    let mut cmd = Command::new("nom");
-    cmd.arg("build");
-    cmd.arg(flake_path);
+    if args.build {
+        commands::run_build(&config).await?;
+    }
 
-    run_command("build", cmd).await?;
-
-    Ok(())
+    Ok(ExitCode::SUCCESS)
 }

@@ -1,5 +1,6 @@
 #![allow(dead_code)]
 
+use std::collections::HashMap;
 use std::fs;
 use std::path::Path;
 
@@ -12,7 +13,7 @@ use serde::Serialize;
 pub struct CfgObj {
     #[serde(default = "default_flake_path")]
     pub flake_path: String,
-    pub hosts: Vec<CfgHost>,
+    pub hosts: HashMap<String, Host>,
 }
 
 fn default_flake_path() -> String {
@@ -28,7 +29,7 @@ pub enum HostTypeLocal {
 
 #[derive(Debug, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase", untagged)]
-pub enum HostMode {
+pub enum Host {
     Local {
         #[serde(flatten)]
         _type: HostTypeLocal,
@@ -36,15 +37,10 @@ pub enum HostMode {
     Remote {
         user: String,
         addr: String,
+        sudo: Option<bool>,
     },
 }
 
-#[derive(Debug, Deserialize, Serialize)]
-pub struct CfgHost {
-    pub name: String,
-    #[serde(flatten)]
-    pub mode: HostMode,
-}
 
 impl CfgObj {
     pub fn load(file: impl AsRef<Path>) -> Result<Self> {
