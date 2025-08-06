@@ -41,7 +41,9 @@ pub fn operation_arg(op: &Operation) -> &'static str {
     match op {
         Operation::Switch => "switch",
         Operation::Boot => "boot",
-        Operation::Dry => "dry-activate",
+        Operation::Test => "test",
+        Operation::DryActivate => "dry-activate",
+        Operation::DryBuild => "dry-build",
     }
 }
 

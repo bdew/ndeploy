@@ -5,7 +5,9 @@ use clap::ValueEnum;
 pub enum Operation {
     Switch,
     Boot,
-    Dry,
+    Test,
+    DryActivate,
+    DryBuild,
 }
 
 #[derive(Parser, Debug)]
@@ -15,11 +17,11 @@ pub struct Args {
     #[arg(short, long, default_value = "machines.yaml")]
     pub config: String,
 
-    /// Run flake update before build and deply
+    /// Run "nix flake update" before build and deploy
     #[arg(short, long, default_value_t = false)]
     pub update: bool,
 
-    /// Run build before deploy
+    /// Run "nom build" to build the default package in the flake before deploying
     #[arg(short, long, default_value_t = false)]
     pub build: bool,
 
@@ -27,7 +29,7 @@ pub struct Args {
     #[arg(required = false)]
     pub hosts: Vec<String>,
 
-    /// Operation to perform
+    /// Operation (from nixos-rebuild) to perform
     #[arg(value_enum, short, long, default_value_t = Operation::Switch)]
     pub operation: Operation,
 }
