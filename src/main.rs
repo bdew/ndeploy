@@ -1,3 +1,4 @@
+use anyhow::Context;
 use anyhow::Result;
 use clap::Parser;
 use std::process::ExitCode;
@@ -16,7 +17,7 @@ async fn main() -> Result<ExitCode> {
         return Ok(ExitCode::FAILURE);
     }
 
-    let config = config::CfgObj::load(args.config)?;
+    let config = config::CfgObj::load(args.config).context("loading config")?;
 
     for host in &args.hosts {
         if !config.hosts.contains_key(host) {

@@ -14,6 +14,7 @@ pub async fn run_update(cfg: &CfgObj) -> Result<()> {
     cmd.arg("--flake");
     cmd.arg(cfg.flake_path.clone());
     run_util::run_command("update", cmd, false).await?;
+    println!();
     Ok(())
 }
 
