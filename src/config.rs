@@ -8,7 +8,7 @@ use anyhow::Result;
 use serde::Deserialize;
 use serde::Serialize;
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct CfgObj {
     #[serde(default = "default_flake_path")]
@@ -16,18 +16,14 @@ pub struct CfgObj {
     pub hosts: HashMap<String, Host>,
 }
 
-fn default_flake_path() -> String {
-    ".".into()
-}
-
 // Hack for nicer config format with untagged mode
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
 #[serde(rename_all = "camelCase", tag = "type")]
 pub enum HostTypeLocal {
     Local,
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
 #[serde(rename_all = "camelCase", untagged)]
 pub enum Host {
     Local {
@@ -35,12 +31,20 @@ pub enum Host {
         _type: HostTypeLocal,
     },
     Remote {
-        user: String,
         addr: String,
+        #[serde(default = "default_user_root")]
+        user: String,
         sudo: Option<bool>,
     },
 }
 
+fn default_flake_path() -> String {
+    ".".into()
+}
+
+fn default_user_root() -> String {
+    "root".into()
+}
 
 impl CfgObj {
     pub fn load(file: impl AsRef<Path>) -> Result<Self> {

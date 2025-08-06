@@ -1,8 +1,11 @@
+use anyhow::Context;
 use anyhow::Result;
 use colored::Colorize;
 use tokio::process::Command;
 
+use crate::args::Operation;
 use crate::config::CfgObj;
+use crate::config::Host;
 use crate::run_util;
 
 pub async fn run_update(cfg: &CfgObj) -> Result<()> {
@@ -26,5 +29,40 @@ pub async fn run_build(cfg: &CfgObj) -> Result<()> {
     cmd.arg(cfg.flake_path.clone());
     run_util::run_command("build", cmd, false).await?;
     println!();
+    Ok(())
+}
+
+pub fn operation_arg(op: &Operation) -> &'static str {
+    match op {
+        Operation::Switch => "switch",
+        Operation::Boot => "boot",
+        Operation::Dry => "dry-activate",
+    }
+}
+
+pub async fn run_host_command(cfg: &CfgObj, op: &Operation, host_name: &str) -> Result<()> {
+    let host = cfg.hosts.get(host_name).context("host not found")?;
+
+    let mut cmd = Command::new("nixos-rebuild");
+
+    cmd.arg(operation_arg(op));
+    cmd.arg("--flake");
+    cmd.arg(format!("{}#{}", cfg.flake_path, host_name));
+
+    match host {
+        Host::Local { _type } => {}
+        Host::Remote { user, addr, sudo } => {
+            cmd.arg("--target-host");
+            cmd.arg(format!("{user}@{addr}"));
+            if matches!(sudo, Some(true)) || (sudo.is_none() && user != "root") {
+                cmd.arg("--use-remote-sudo");
+            }
+        }
+    }
+
+    println!("{}: Running {:?}", host_name.purple().bold(), cmd.as_std());
+
+    run_util::run_command(host_name, cmd, true).await?;
+
     Ok(())
 }

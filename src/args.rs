@@ -12,7 +12,7 @@ pub enum Operation {
 #[command(version, about = "nixos deploy utility")]
 pub struct Args {
     /// Config file to use
-    #[arg(short, long, default_value = "config.yaml")]
+    #[arg(short, long, default_value = "machines.yaml")]
     pub config: String,
 
     /// Run flake update before build and deply
