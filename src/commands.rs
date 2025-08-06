@@ -50,7 +50,11 @@ pub async fn run_host_command(cfg: &CfgObj, op: &Operation, host_name: &str) -> 
     cmd.arg(format!("{}#{}", cfg.flake_path, host_name));
 
     match host {
-        Host::Local { _type } => {}
+        Host::Local { _type, sudo } => {
+            if !matches!(sudo, Some(false)) {
+                cmd.arg("--use-remote-sudo");
+            }
+        }
         Host::Remote { user, addr, sudo, no_tty, substitutes } => {
             cmd.arg("--target-host");
             cmd.arg(format!("{user}@{addr}"));

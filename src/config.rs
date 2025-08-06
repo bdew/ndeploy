@@ -29,6 +29,7 @@ pub enum Host {
     Local {
         #[serde(flatten)]
         _type: HostTypeLocal,
+        sudo: Option<bool>,
     },
     Remote {
         addr: String,
