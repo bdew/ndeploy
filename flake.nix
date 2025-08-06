@@ -19,7 +19,7 @@
       system:
       let
         pkgs = nixpkgs.legacyPackages.${system};
-        rustToolchain = fenix.packages.${system}.stable.toolchain;
+        rustToolchain = fenix.packages.${system}.stable.minimalToolchain;
         rustPackage = fenix.packages.${system}.stable.withComponents [
           "cargo"
           "clippy"
@@ -31,14 +31,31 @@
           cargo = rustToolchain;
           rustc = rustToolchain;
         };
-        build = import ./build.nix { inherit pkgs rustPlatform; };
       in
       {
-        packages = {
-          sensors = build.main-package;
-          docker-image = build.docker-image;
-          default = build.main-package;
+        packages.ndeploy = rustPlatform.buildRustPackage {
+          pname = "ndeploy";
+          version = "0.1.0";
+
+          buildInputs = [ pkgs.nix-output-monitor ];
+
+          src = pkgs.lib.fileset.toSource {
+            root = ./.;
+            fileset = pkgs.lib.fileset.unions [
+              ./Cargo.toml
+              ./Cargo.lock
+              ./src
+            ];
+          };
+
+          cargoLock = {
+            lockFile = ./Cargo.lock;
+          };
+
+          NOM_PATH = "${pkgs.nix-output-monitor}/bin/nom";
         };
+
+        packages.default = self.packages."${system}".ndeploy;
 
         devShell = pkgs.mkShell {
           buildInputs = [

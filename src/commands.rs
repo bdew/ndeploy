@@ -8,6 +8,11 @@ use crate::config::CfgObj;
 use crate::config::Host;
 use crate::run_util;
 
+static NOM_PATH: &str = match option_env!("NOM_PATH") {
+    Some(path) => path,
+    None => "nom",
+};
+
 pub async fn run_update(cfg: &CfgObj) -> Result<()> {
     println!("{}", "=== Start Update ===".yellow().bold());
     println!();
@@ -24,7 +29,7 @@ pub async fn run_update(cfg: &CfgObj) -> Result<()> {
 pub async fn run_build(cfg: &CfgObj) -> Result<()> {
     println!("{}", "=== Start Build ===".yellow().bold());
     println!();
-    let mut cmd = Command::new("nom");
+    let mut cmd = Command::new(NOM_PATH);
     cmd.arg("build");
     cmd.arg(cfg.flake_path.clone());
     run_util::run_command("build", cmd, false).await?;
