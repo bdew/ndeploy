@@ -20,15 +20,15 @@ pub fn wrap_stream(name: &str, err: bool, reader: impl AsyncRead + Unpin + Send 
 pub async fn run_command(name_ref: impl AsRef<str>, mut cmd: Command, wrap: bool) -> Result<()> {
     let name = name_ref.as_ref();
 
-    let (stdout_cfg, stderr_cfg) = if wrap {
-        (Stdio::piped(), Stdio::piped())
+    if wrap {
+        cmd.stdout(Stdio::piped()).stderr(Stdio::piped());
     } else {
-        (Stdio::inherit(), Stdio::inherit())
-    };
+        cmd.stdout(Stdio::inherit()).stderr(Stdio::inherit());
+    }
+
+    cmd.stdin(Stdio::null());
 
     let mut child = cmd
-        .stdout(stdout_cfg)
-        .stderr(stderr_cfg)
         .spawn()
         .context(format!("Failed to run {:?}", cmd.as_std()))?;
 

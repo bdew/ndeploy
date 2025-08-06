@@ -35,6 +35,8 @@ pub enum Host {
         #[serde(default = "default_user_root")]
         user: String,
         sudo: Option<bool>,
+        no_tty: Option<bool>,
+        substitutes: Option<bool>,
     },
 }
 
@@ -45,6 +47,7 @@ fn default_flake_path() -> String {
 fn default_user_root() -> String {
     "root".into()
 }
+
 
 impl CfgObj {
     pub fn load(file: impl AsRef<Path>) -> Result<Self> {

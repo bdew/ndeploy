@@ -51,9 +51,18 @@ pub async fn run_host_command(cfg: &CfgObj, op: &Operation, host_name: &str) -> 
 
     match host {
         Host::Local { _type } => {}
-        Host::Remote { user, addr, sudo } => {
+        Host::Remote { user, addr, sudo, no_tty, substitutes } => {
             cmd.arg("--target-host");
             cmd.arg(format!("{user}@{addr}"));
+
+            if !matches!(no_tty, Some(false)) {
+                cmd.arg("--no-ssh-tty");
+            }
+
+            if !matches!(substitutes, Some(false)) {
+                cmd.arg("--use-substitutes");
+            }
+
             if matches!(sudo, Some(true)) || (sudo.is_none() && user != "root") {
                 cmd.arg("--use-remote-sudo");
             }

@@ -62,7 +62,7 @@ async fn main() -> Result<ExitCode> {
                     println!("{}: {}", host.bold(), "Success".green());
                 }
                 (host, Err(e)) => {
-                    eprintln!("{}: {}", host.bold(), format!("{e}").red());
+                    println!("{}: {}", host.bold(), format!("{e}").red());
                 }
             }
         }
