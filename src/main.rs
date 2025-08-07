@@ -13,16 +13,14 @@ mod run_util;
 
 #[tokio::main(flavor = "current_thread")]
 async fn main() -> Result<ExitCode> {
-    let args = Box::leak(Box::new(args::Args::parse()));
+    let args = args::Args::parse();
 
     if (!args.build && !args.update) && args.hosts.is_empty() {
         eprintln!("Error: No hosts specified and neither build nor update is requested.");
         return Ok(ExitCode::FAILURE);
     }
 
-    let config = Box::leak(Box::new(
-        CfgObj::load(&args.config).context("loading config")?,
-    ));
+    let config = CfgObj::load(&args.config).context("loading config")?;
 
     for host in &args.hosts {
         if !config.hosts.contains_key(host) {
@@ -32,38 +30,33 @@ async fn main() -> Result<ExitCode> {
     }
 
     if args.update {
-        commands::run_update(config).await?;
+        commands::run_update(&config).await?;
     }
 
     if args.build {
-        commands::run_build(config).await?;
+        commands::run_build(&config).await?;
     }
 
     if !args.hosts.is_empty() {
         println!("{}", "=== Start Deploy ===".yellow().bold());
         println!();
 
-        let mut join_set = tokio::task::JoinSet::new();
-        for host in &args.hosts {
-            join_set.spawn(async {
-                let res = commands::run_host_command(config, &args.operation, host).await;
-                (host.clone(), res)
-            });
-        }
+        let futures = args.hosts.iter().map(|host| async {
+            let res = commands::run_host_command(&config, &args.operation, host).await;
+            (host.clone(), res)
+        });
 
-        let res = join_set.join_all().await;
+        let res = futures::future::join_all(futures).await;
 
         println!();
         println!("{}", "=== Result ===".yellow().bold());
         println!();
-        for res in res {
-            match res {
-                (host, Ok(())) => {
-                    println!("{}: {}", host.bold(), "Success".green());
-                }
-                (host, Err(e)) => {
-                    println!("{}: {}", host.bold(), format!("{e}").red());
-                }
+
+        for (host, res) in res {
+            if let Err(e) = &res {
+                println!("❌ {}: {}", host.bold(), format!("{e}").red());
+            } else {
+                println!("✅ {}: {}", host.bold(), "Success".green());
             }
         }
     }
