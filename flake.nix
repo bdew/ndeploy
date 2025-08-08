@@ -35,9 +35,10 @@
       {
         packages.ndeploy = rustPlatform.buildRustPackage {
           pname = "ndeploy";
-          version = "0.1.0";
+          version = "0.2.0";
 
           buildInputs = [ pkgs.nix-output-monitor ];
+          nativeBuildInputs = [ pkgs.installShellFiles ];
 
           src = pkgs.lib.fileset.toSource {
             root = ./.;
@@ -45,6 +46,7 @@
               ./Cargo.toml
               ./Cargo.lock
               ./src
+              ./build.rs
             ];
           };
 
@@ -53,6 +55,11 @@
           };
 
           NOM_PATH = "${pkgs.nix-output-monitor}/bin/nom";
+
+          postInstall = ''
+            ls target/completions/*
+            installShellCompletion target/completions/ndeploy.bash target/completions/ndeploy.fish target/completions/_ndeploy
+          '';
         };
 
         packages.default = self.packages."${system}".ndeploy;

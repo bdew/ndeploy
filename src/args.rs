@@ -1,5 +1,6 @@
 use clap::Parser;
 use clap::ValueEnum;
+use clap::ValueHint;
 
 #[derive(Debug, ValueEnum, Clone, PartialEq, Eq)]
 pub enum Operation {
@@ -14,7 +15,7 @@ pub enum Operation {
 #[command(version, about = "nixos deploy utility")]
 pub struct Args {
     /// Config file to use
-    #[arg(short, long, default_value = "machines.yaml")]
+    #[arg(short, long, default_value = "machines.yaml", value_hint = ValueHint::FilePath)]
     pub config: String,
 
     /// Run "nix flake update" before build and deploy
