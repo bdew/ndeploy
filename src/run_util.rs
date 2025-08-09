@@ -53,7 +53,7 @@ pub async fn run_command(name_ref: impl AsRef<str>, mut cmd: Command, wrap: bool
 
     if !res.success() {
         anyhow::bail!(
-            "Command {name} failed with exit code {}",
+            "Command failed with exit code {}",
             res.code().unwrap_or(-1)
         );
     }

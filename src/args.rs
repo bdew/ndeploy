@@ -26,11 +26,19 @@ pub struct Args {
     #[arg(short, long, default_value_t = false)]
     pub build: bool,
 
-    /// Hosts to deploy to
-    #[arg(required = false)]
-    pub hosts: Vec<String>,
+    /// Run on all hosts
+    #[arg(short, long, default_value_t = false)]
+    pub all: bool,
 
     /// Operation (from nixos-rebuild) to perform
     #[arg(value_enum, short, long, default_value_t = Operation::Switch)]
     pub operation: Operation,
+
+    /// Command to execute remotely
+    #[arg(short, long, value_hint = ValueHint::CommandString)]
+    pub run: Option<String>,
+
+    /// Hosts to deploy to
+    #[arg(required = false)]
+    pub hosts: Vec<String>,
 }

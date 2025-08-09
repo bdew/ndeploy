@@ -14,7 +14,9 @@ Options:
   -c, --config <CONFIG>        Config file to use [default: machines.yaml]
   -u, --update                 Run "nix flake update" before build and deploy
   -b, --build                  Run "nom build" to build the default package in the flake before deploying
+  -a, --all                    Run on all hosts
   -o, --operation <OPERATION>  Operation (from nixos-rebuild) to perform [default: switch] [possible values: switch, boot, test, dry-activate, dry-build]
+  -r, --run <RUN>              Command to execute remotely
   -h, --help                   Print help
   -V, --version                Print version
 ```
@@ -39,3 +41,4 @@ hosts:                              # Hosts that can be deployed to
 ## Features
 
 - If multiple hosts are passed - will perform the deploy in parallel
+- Can run ssh commands on remote hosts in parallel

@@ -31,11 +31,12 @@
           cargo = rustToolchain;
           rustc = rustToolchain;
         };
+        manifest = (pkgs.lib.importTOML ./Cargo.toml).package;
       in
       {
         packages.ndeploy = rustPlatform.buildRustPackage {
-          pname = "ndeploy";
-          version = "0.2.0";
+          pname = manifest.name;
+          version = manifest.version;
 
           buildInputs = [ pkgs.nix-output-monitor ];
           nativeBuildInputs = [ pkgs.installShellFiles ];

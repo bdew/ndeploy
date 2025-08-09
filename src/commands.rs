@@ -47,7 +47,33 @@ pub fn operation_arg(op: &Operation) -> &'static str {
     }
 }
 
-pub async fn run_host_command(cfg: &CfgObj, op: &Operation, host_name: &str) -> Result<()> {
+pub async fn run_deploy(config: &CfgObj, op: &Operation, hosts: &[String]) -> Result<()> {
+    println!("{}", "=== Start Deploy ===".yellow().bold());
+    println!();
+
+    let futures = hosts.iter().map(|host| async {
+        let res = run_host_deploy(config, op, host).await;
+        (host.clone(), res)
+    });
+
+    let res = futures::future::join_all(futures).await;
+
+    println!();
+    println!("{}", "=== Result ===".yellow().bold());
+    println!();
+
+    for (host, res) in res {
+        if let Err(e) = &res {
+            println!("❌ {}: {}", host.bold(), format!("{e}").red());
+        } else {
+            println!("✅ {}: {}", host.bold(), "Success".green());
+        }
+    }
+
+    Ok(())
+}
+
+pub async fn run_host_deploy(cfg: &CfgObj, op: &Operation, host_name: &str) -> Result<()> {
     let host = cfg.hosts.get(host_name).context("host not found")?;
 
     let mut cmd = Command::new("nixos-rebuild");
@@ -62,7 +88,13 @@ pub async fn run_host_command(cfg: &CfgObj, op: &Operation, host_name: &str) -> 
                 cmd.arg("--use-remote-sudo");
             }
         }
-        Host::Remote { user, addr, sudo, no_tty, substitutes } => {
+        Host::Remote {
+            user,
+            addr,
+            sudo,
+            no_tty,
+            substitutes,
+        } => {
             cmd.arg("--target-host");
             cmd.arg(format!("{user}@{addr}"));
 
@@ -83,6 +115,50 @@ pub async fn run_host_command(cfg: &CfgObj, op: &Operation, host_name: &str) -> 
     println!("{}: Running {:?}", host_name.purple().bold(), cmd.as_std());
 
     run_util::run_command(host_name, cmd, true).await?;
+
+    Ok(())
+}
+
+pub async fn run_command(config: &CfgObj, hosts: &[String], cmd: &str) -> Result<()> {
+    println!("{}", format!("=== Start Run: {cmd} ===").yellow().bold());
+    println!();
+
+    let futures = hosts.iter().map(|host| async {
+        let res = run_host_command(config, host, cmd).await;
+        if let Err(e) = &res {
+            println!("{}: ❌ {}", host.red().bold(), format!("{e}").red());
+        };
+    });
+
+    futures::future::join_all(futures).await;
+
+    Ok(())
+}
+
+pub async fn run_host_command(cfg: &CfgObj, host_name: &str, cmd_arg: &str) -> Result<()> {
+    let host = cfg.hosts.get(host_name).context("host not found")?;
+
+    match host {
+        Host::Local { _type, sudo: _ } => {
+            println!("{}: Skipping local host", host_name.purple().bold());
+        }
+        Host::Remote {
+            user,
+            addr,
+            sudo: _,
+            no_tty: _,
+            substitutes: _,
+        } => {
+            let mut cmd = Command::new("ssh");
+
+            cmd.arg(format!("{user}@{addr}"));
+
+            cmd.arg("-T");
+            cmd.arg(cmd_arg);
+
+            run_util::run_command(host_name, cmd, true).await?;
+        }
+    }
 
     Ok(())
 }
