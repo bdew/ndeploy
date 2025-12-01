@@ -56,7 +56,7 @@
           };
 
           NOM_PATH = "${pkgs.nix-output-monitor}/bin/nom";
-          NIXOS_REBUILD_PATH = "${pkgs.nixos-rebuild-ng}/bin/nixos-rebuild";
+          NIXOS_REBUILD_PATH = "${pkgs.nixos-rebuild}/bin/nixos-rebuild";
 
           postInstall = ''
             ls target/completions/*
