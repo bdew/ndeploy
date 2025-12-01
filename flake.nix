@@ -85,7 +85,7 @@
         }:
         {
           environment.systemPackages = [
-            (self.packages."${pkgs.stdenv.system}".default.overrideAttrs {
+            (self.packages."${pkgs.stdenv.hostPlatform.system}".default.overrideAttrs {
               NIXOS_REBUILD_PATH = lib.getExe config.system.build.nixos-rebuild;
             })
           ];
