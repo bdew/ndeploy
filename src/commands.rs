@@ -13,6 +13,11 @@ static NOM_PATH: &str = match option_env!("NOM_PATH") {
     None => "nom",
 };
 
+static NIXOS_REBUILD_PATH: &str = match option_env!("NIXOS_REBUILD_PATH") {
+    Some(path) => path,
+    None => "nixos-rebuild",
+};
+
 pub async fn run_update(cfg: &CfgObj) -> Result<()> {
     println!("{}", "=== Start Update ===".yellow().bold());
     println!();
@@ -76,7 +81,7 @@ pub async fn run_deploy(config: &CfgObj, op: &Operation, hosts: &[String]) -> Re
 pub async fn run_host_deploy(cfg: &CfgObj, op: &Operation, host_name: &str) -> Result<()> {
     let host = cfg.hosts.get(host_name).context("host not found")?;
 
-    let mut cmd = Command::new("nixos-rebuild");
+    let mut cmd = Command::new(NIXOS_REBUILD_PATH);
 
     cmd.arg(operation_arg(op));
     cmd.arg("--flake");
@@ -92,22 +97,17 @@ pub async fn run_host_deploy(cfg: &CfgObj, op: &Operation, host_name: &str) -> R
             user,
             addr,
             sudo,
-            no_tty,
             substitutes,
         } => {
             cmd.arg("--target-host");
             cmd.arg(format!("{user}@{addr}"));
-
-            if !matches!(no_tty, Some(false)) {
-                cmd.arg("--no-ssh-tty");
-            }
 
             if !matches!(substitutes, Some(false)) {
                 cmd.arg("--use-substitutes");
             }
 
             if matches!(sudo, Some(true)) || (sudo.is_none() && user != "root") {
-                cmd.arg("--use-remote-sudo");
+                cmd.arg("--sudo");
             }
         }
     }
@@ -146,7 +146,6 @@ pub async fn run_host_command(cfg: &CfgObj, host_name: &str, cmd_arg: &str) -> R
             user,
             addr,
             sudo: _,
-            no_tty: _,
             substitutes: _,
         } => {
             let mut cmd = Command::new("ssh");

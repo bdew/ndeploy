@@ -36,7 +36,6 @@ pub enum Host {
         #[serde(default = "default_user_root")]
         user: String,
         sudo: Option<bool>,
-        no_tty: Option<bool>,
         substitutes: Option<bool>,
     },
 }

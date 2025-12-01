@@ -1,6 +1,6 @@
 {
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-25.05";
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-25.11";
     flake-utils.url = "github:numtide/flake-utils";
     fenix = {
       url = "github:nix-community/fenix/monthly";
@@ -56,6 +56,7 @@
           };
 
           NOM_PATH = "${pkgs.nix-output-monitor}/bin/nom";
+          NIXOS_REBUILD_PATH = "${pkgs.nixos-rebuild-ng}/bin/nixos-rebuild";
 
           postInstall = ''
             ls target/completions/*
