@@ -86,6 +86,7 @@ pub async fn run_host_deploy(cfg: &CfgObj, op: &Operation, host_name: &str) -> R
     cmd.arg(operation_arg(op));
     cmd.arg("--flake");
     cmd.arg(format!("{}#{}", cfg.flake_path, host_name));
+    cmd.arg("--no-reexec");
 
     match host {
         Host::Local { _type, sudo } => {
