@@ -31,7 +31,7 @@ hosts:                              # Hosts that can be deployed to
   foo:                              # Each host should match an entry in nixosConfigurations
     addr: foo.example.com
     user: somebody                  # Will use ssh somebody@foo.example.com
-    sudo: true                      # Optional, adds --use-remote-sudo to nixos-rebuild (default: true if user != root)
+    sudo: true                      # Optional, adds --sudo to nixos-rebuild (default: true if user != root)
     noTty: true                     # Optional, adds --no-ssh-tty to nixos-rebuild (default: true)
     substitutes: true               # Optional, adds --use-substitutes to nixos-rebuild (default: true)
   self:                             

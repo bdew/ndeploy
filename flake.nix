@@ -55,8 +55,8 @@
             lockFile = ./Cargo.lock;
           };
 
-          NOM_PATH = "${pkgs.nix-output-monitor}/bin/nom";
-          NIXOS_REBUILD_PATH = "${pkgs.nixos-rebuild}/bin/nixos-rebuild";
+          NOM_PATH = "${pkgs.lib.getExe pkgs.nix-output-monitor}";
+          NIXOS_REBUILD_PATH = "${pkgs.lib.getExe pkgs.nixos-rebuild}";
 
           postInstall = ''
             ls target/completions/*
@@ -70,9 +70,25 @@
           buildInputs = [
             rustPackage
             fenix.packages.${system}.latest.rustfmt
-            pkgs.nixfmt-rfc-style
+            pkgs.nixfmt
           ];
         };
       }
-    );
+    )
+    // {
+      modules.default =
+        {
+          pkgs,
+          lib,
+          config,
+          ...
+        }:
+        {
+          environment.systemPackages = [
+            (self.packages."${pkgs.stdenv.system}".default.overrideAttrs {
+              NIXOS_REBUILD_PATH = lib.getExe config.system.build.nixos-rebuild;
+            })
+          ];
+        };
+    };
 }

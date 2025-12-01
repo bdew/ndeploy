@@ -90,7 +90,7 @@ pub async fn run_host_deploy(cfg: &CfgObj, op: &Operation, host_name: &str) -> R
     match host {
         Host::Local { _type, sudo } => {
             if !matches!(sudo, Some(false)) {
-                cmd.arg("--use-remote-sudo");
+                cmd.arg("--sudo");
             }
         }
         Host::Remote {
