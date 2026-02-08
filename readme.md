@@ -16,6 +16,7 @@ Options:
   -b, --build                  Run "nom build" to build the default package in the flake before deploying
   -a, --all                    Run on all hosts
   -o, --operation <OPERATION>  Operation (from nixos-rebuild) to perform [default: switch] [possible values: switch, boot, test, dry-activate, dry-build]
+  -R, --reboot                 Reboot system after deployment
   -r, --run <RUN>              Command to execute remotely
   -h, --help                   Print help
   -V, --version                Print version
@@ -32,7 +33,6 @@ hosts:                              # Hosts that can be deployed to
     addr: foo.example.com
     user: somebody                  # Will use ssh somebody@foo.example.com
     sudo: true                      # Optional, adds --sudo to nixos-rebuild (default: true if user != root)
-    noTty: true                     # Optional, adds --no-ssh-tty to nixos-rebuild (default: true)
     substitutes: true               # Optional, adds --use-substitutes to nixos-rebuild (default: true)
   self:                             
     type: local                     # Will deploy to local machine
