@@ -19,7 +19,7 @@ fn main() -> Result<(), Error> {
 
     for &shell in Shell::value_variants() {
         let path = generate_to(shell, &mut cmd, &name, &completions_dir)?;
-        println!("cargo:information=completion completeion for {shell} generated in {path:?}");
+        println!("cargo:information=completion completion for {shell} generated in {path:?}");
     }
 
     Ok(())

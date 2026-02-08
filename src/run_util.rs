@@ -11,7 +11,7 @@ pub fn wrap_stream(name: &str, err: bool, reader: impl AsyncRead + Unpin + Send 
     let mut reader = BufReader::new(reader).lines();
     let name_prefix = if err { name.red().bold() } else { name.bold() };
     tokio::spawn(async move {
-        while let Some(line) = reader.next_line().await.unwrap() {
+        while let Ok(Some(line)) = reader.next_line().await {
             println!("{name_prefix}: {line}");
         }
     });

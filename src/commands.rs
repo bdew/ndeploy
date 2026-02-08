@@ -18,6 +18,15 @@ static NIXOS_REBUILD_PATH: &str = match option_env!("NIXOS_REBUILD_PATH") {
     None => "nixos-rebuild",
 };
 
+fn should_use_sudo(host: &Host) -> bool {
+    match host {
+        Host::Local { sudo, .. } => !matches!(sudo, Some(false)),
+        Host::Remote { sudo, user, .. } => {
+            matches!(sudo, Some(true)) || (sudo.is_none() && user != "root")
+        }
+    }
+}
+
 pub async fn run_update(cfg: &CfgObj) -> Result<()> {
     println!("{}", "=== Start Update ===".yellow().bold());
     println!();
@@ -25,7 +34,7 @@ pub async fn run_update(cfg: &CfgObj) -> Result<()> {
     cmd.arg("flake");
     cmd.arg("update");
     cmd.arg("--flake");
-    cmd.arg(cfg.flake_path.clone());
+    cmd.arg(&cfg.flake_path);
     run_util::run_command("update", cmd, false).await?;
     println!();
     Ok(())
@@ -36,7 +45,7 @@ pub async fn run_build(cfg: &CfgObj) -> Result<()> {
     println!();
     let mut cmd = Command::new(NOM_PATH);
     cmd.arg("build");
-    cmd.arg(cfg.flake_path.clone());
+    cmd.arg(&cfg.flake_path);
     run_util::run_command("build", cmd, false).await?;
     println!();
     Ok(())
@@ -61,9 +70,9 @@ pub async fn run_deploy(
     println!("{}", "=== Start Deploy ===".yellow().bold());
     println!();
 
-    let futures = hosts.iter().map(|host| async {
+    let futures = hosts.iter().map(|host| async move {
         let res = run_host_deploy(config, op, host, reboot).await;
-        (host.clone(), res)
+        (host, res)
     });
 
     let res = futures::future::join_all(futures).await;
@@ -101,27 +110,25 @@ pub async fn run_host_deploy(
     cmd.arg(format!("{}#{}", cfg.flake_path, host_name));
     cmd.arg("--no-reexec");
 
+    if should_use_sudo(host) {
+        cmd.arg("--sudo");
+    }
+
     match host {
-        Host::Local { _type, sudo } => {
-            if !matches!(sudo, Some(false)) {
-                cmd.arg("--sudo");
-            }
+        Host::Local { .. } => {
+            // Local deployment, no additional args needed
         }
         Host::Remote {
             user,
             addr,
-            sudo,
             substitutes,
+            ..
         } => {
             cmd.arg("--target-host");
             cmd.arg(format!("{user}@{addr}"));
 
             if !matches!(substitutes, Some(false)) {
                 cmd.arg("--use-substitutes");
-            }
-
-            if matches!(sudo, Some(true)) || (sudo.is_none() && user != "root") {
-                cmd.arg("--sudo");
             }
         }
     }
@@ -139,27 +146,21 @@ pub async fn run_host_deploy(
 
 pub async fn run_host_reboot(host_name: &str, host: &Host) -> Result<String> {
     match host {
-        Host::Local { _type: _, sudo: _ } => {
+        Host::Local { .. } => {
             println!(
                 "{}: Skipping reboot for local host (reboot manually if needed)",
                 host_name.purple().bold()
             );
             return check_host_ver(host).await;
         }
-        Host::Remote {
-            user,
-            addr,
-            sudo,
-            substitutes: _,
-        } => {
+        Host::Remote { user, addr, .. } => {
             println!("{}: Rebooting system...", host_name.purple().bold());
 
             let mut ssh_cmd = Command::new("ssh");
             ssh_cmd.arg(format!("{user}@{addr}"));
             ssh_cmd.arg("-T");
 
-            let reboot_command = if matches!(sudo, Some(true)) || (sudo.is_none() && user != "root")
-            {
+            let reboot_command = if should_use_sudo(host) {
                 "sudo reboot"
             } else {
                 "reboot"
@@ -196,13 +197,8 @@ pub async fn run_host_reboot(host_name: &str, host: &Host) -> Result<String> {
 
 async fn check_host_ver(host: &Host) -> Result<String> {
     let mut cmd = match host {
-        Host::Local { _type: _, sudo: _ } => Command::new("nixos-version"),
-        Host::Remote {
-            user,
-            addr,
-            sudo: _,
-            substitutes: _,
-        } => {
+        Host::Local { .. } => Command::new("nixos-version"),
+        Host::Remote { user, addr, .. } => {
             let mut check_cmd = Command::new("ssh");
             check_cmd.arg(format!("{user}@{addr}"));
             check_cmd.arg("-T");
@@ -245,15 +241,10 @@ pub async fn run_host_command(cfg: &CfgObj, host_name: &str, cmd_arg: &str) -> R
     let host = cfg.hosts.get(host_name).context("host not found")?;
 
     match host {
-        Host::Local { _type, sudo: _ } => {
+        Host::Local { .. } => {
             println!("{}: Skipping local host", host_name.purple().bold());
         }
-        Host::Remote {
-            user,
-            addr,
-            sudo: _,
-            substitutes: _,
-        } => {
+        Host::Remote { user, addr, .. } => {
             let mut cmd = Command::new("ssh");
 
             cmd.arg(format!("{user}@{addr}"));
