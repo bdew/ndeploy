@@ -56,7 +56,7 @@
           };
 
           NOM_PATH = "${pkgs.lib.getExe pkgs.nix-output-monitor}";
-          NIXOS_REBUILD_PATH = "${pkgs.lib.getExe pkgs.nixos-rebuild}";
+          NIXOS_REBUILD_PATH = "${pkgs.lib.getExe pkgs.nixos-rebuild-ng}";
 
           postInstall = ''
             ls target/completions/*

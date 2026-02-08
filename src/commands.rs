@@ -52,12 +52,17 @@ pub fn operation_arg(op: &Operation) -> &'static str {
     }
 }
 
-pub async fn run_deploy(config: &CfgObj, op: &Operation, hosts: &[String]) -> Result<()> {
+pub async fn run_deploy(
+    config: &CfgObj,
+    op: &Operation,
+    hosts: &[String],
+    reboot: bool,
+) -> Result<()> {
     println!("{}", "=== Start Deploy ===".yellow().bold());
     println!();
 
     let futures = hosts.iter().map(|host| async {
-        let res = run_host_deploy(config, op, host).await;
+        let res = run_host_deploy(config, op, host, reboot).await;
         (host.clone(), res)
     });
 
@@ -78,7 +83,12 @@ pub async fn run_deploy(config: &CfgObj, op: &Operation, hosts: &[String]) -> Re
     Ok(())
 }
 
-pub async fn run_host_deploy(cfg: &CfgObj, op: &Operation, host_name: &str) -> Result<()> {
+pub async fn run_host_deploy(
+    cfg: &CfgObj,
+    op: &Operation,
+    host_name: &str,
+    reboot: bool,
+) -> Result<()> {
     let host = cfg.hosts.get(host_name).context("host not found")?;
 
     let mut cmd = Command::new(NIXOS_REBUILD_PATH);
@@ -116,6 +126,85 @@ pub async fn run_host_deploy(cfg: &CfgObj, op: &Operation, host_name: &str) -> R
     println!("{}: Running {:?}", host_name.purple().bold(), cmd.as_std());
 
     run_util::run_command(host_name, cmd, true).await?;
+
+    if reboot {
+        run_host_reboot(cfg, host_name).await?;
+    }
+
+    Ok(())
+}
+
+pub async fn run_host_reboot(cfg: &CfgObj, host_name: &str) -> Result<()> {
+    let host = cfg.hosts.get(host_name).context("host not found")?;
+
+    match host {
+        Host::Local { _type: _, sudo: _ } => {
+            println!(
+                "{}: Skipping reboot for local host (reboot manually if needed)",
+                host_name.purple().bold()
+            );
+        }
+        Host::Remote {
+            user,
+            addr,
+            sudo,
+            substitutes: _,
+        } => {
+            println!("{}: Rebooting system...", host_name.purple().bold());
+
+            let mut ssh_cmd = Command::new("ssh");
+            ssh_cmd.arg(format!("{user}@{addr}"));
+            ssh_cmd.arg("-T");
+
+            let reboot_command =
+                if matches!(sudo, Some(true)) || (sudo.is_none() && user != "root") {
+                    "sudo reboot"
+                } else {
+                    "reboot"
+                };
+
+            ssh_cmd.arg(reboot_command);
+
+            run_util::run_command(host_name, ssh_cmd, true).await?;
+
+            println!(
+                "{}: Waiting 30 seconds for system to reboot...",
+                host_name.purple().bold()
+            );
+            tokio::time::sleep(tokio::time::Duration::from_secs(30)).await;
+
+            // Try to connect and run nixos-version with retries
+            for attempt in 1..=10 {
+                let mut check_cmd = Command::new("ssh");
+                check_cmd.arg(format!("{user}@{addr}"));
+                check_cmd.arg("-T");
+                check_cmd.arg("-o");
+                check_cmd.arg("ConnectTimeout=5");
+                check_cmd.arg("nixos-version");
+
+                match run_util::run_command(host_name, check_cmd, true).await {
+                    Ok(_) => {
+                        println!("{}: System is back up!", host_name.purple().bold());
+                        break;
+                    }
+                    Err(_) if attempt < 10 => {
+                        println!(
+                            "{}: Connection attempt {} failed, retrying in 10 seconds...",
+                            host_name.purple().bold(),
+                            attempt
+                        );
+                        tokio::time::sleep(tokio::time::Duration::from_secs(10)).await;
+                    }
+                    Err(e) => {
+                        anyhow::bail!(
+                            "Failed to connect to host after reboot (10 attempts): {}",
+                            e
+                        );
+                    }
+                }
+            }
+        }
+    }
 
     Ok(())
 }

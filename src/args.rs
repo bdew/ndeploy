@@ -38,6 +38,10 @@ pub struct Args {
     #[arg(short, long, value_hint = ValueHint::CommandString)]
     pub run: Option<String>,
 
+    /// Reboot system after deployment
+    #[arg(short = 'R', long, default_value_t = false)]
+    pub reboot: bool,
+
     /// Hosts to deploy to
     #[arg(required = false)]
     pub hosts: Vec<String>,

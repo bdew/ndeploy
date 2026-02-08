@@ -52,10 +52,7 @@ pub async fn run_command(name_ref: impl AsRef<str>, mut cmd: Command, wrap: bool
         .context(format!("Failed to wait for {name}"))?;
 
     if !res.success() {
-        anyhow::bail!(
-            "Command failed with exit code {}",
-            res.code().unwrap_or(-1)
-        );
+        anyhow::bail!("Command failed with exit code {}", res.code().unwrap_or(-1));
     }
 
     Ok(())

@@ -12,7 +12,7 @@ colored = "3.1"
 futures = "0.3"
 serde = { version = "1.0", features = ["derive"] }
 serde_yaml_ng = "0.10"
-tokio = { version = "1.49", features = ["macros", "rt", "process", "io-util"] }
+tokio = { version = "1.49", features = ["macros", "rt", "process", "io-util", "time"] }
 
 
 [build-dependencies]

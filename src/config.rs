@@ -48,7 +48,6 @@ fn default_user_root() -> String {
     "root".into()
 }
 
-
 impl CfgObj {
     pub fn load(file: impl AsRef<Path>) -> Result<Self> {
         let str = fs::read_to_string(file)?;

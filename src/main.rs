@@ -51,7 +51,7 @@ async fn main() -> Result<ExitCode> {
         if let Some(cmd) = args.run {
             commands::run_command(&config, &hosts, &cmd).await?;
         } else {
-            commands::run_deploy(&config, &args.operation, &hosts).await?;
+            commands::run_deploy(&config, &args.operation, &hosts, args.reboot).await?;
         }
     }
 
