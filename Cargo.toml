@@ -1,6 +1,6 @@
 [package]
 name = "ndeploy"
-version = "0.5.0"
+version = "0.6.0"
 edition = "2024"
 build = "build.rs"
 
@@ -8,11 +8,11 @@ build = "build.rs"
 anyhow = "1.0"
 clap = { version = "4.5", features = ["derive"] }
 clap_complete = "4.5"
-colored = "3.0"
+colored = "3.1"
 futures = "0.3"
 serde = { version = "1.0", features = ["derive"] }
 serde_yaml_ng = "0.10"
-tokio = { version = "1.48", features = ["macros", "rt", "process", "io-util"] }
+tokio = { version = "1.49", features = ["macros", "rt", "process", "io-util"] }
 
 
 [build-dependencies]
