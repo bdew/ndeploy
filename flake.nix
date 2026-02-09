@@ -66,7 +66,7 @@
 
         packages.default = self.packages."${system}".ndeploy;
 
-        devShell = pkgs.mkShell {
+        devShells.default = pkgs.mkShell {
           buildInputs = [
             rustPackage
             fenix.packages.${system}.latest.rustfmt
@@ -76,7 +76,7 @@
       }
     )
     // {
-      modules.default =
+      nixosModules.default =
         {
           pkgs,
           lib,
