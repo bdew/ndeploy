@@ -6,15 +6,15 @@ build = "build.rs"
 
 [dependencies]
 anyhow = "1.0.102"
-clap = { version = "4.6.0", features = ["derive"] }
-clap_complete = "4.6.0"
+clap = { version = "4.6.1", features = ["derive"] }
+clap_complete = "4.6.5"
 colored = "3.1"
 futures = "0.3.32"
 serde = { version = "1.0.228", features = ["derive"] }
 serde_yaml_ng = "0.10"
-tokio = { version = "1.51.1", features = ["macros", "rt", "process", "io-util", "time"] }
+tokio = { version = "1.52.3", features = ["macros", "rt", "process", "io-util", "time"] }
 
 
 [build-dependencies]
-clap = { version = "4.6.0", features = ["derive"] }
-clap_complete = "4.6.0"
+clap = { version = "4.6.1", features = ["derive"] }
+clap_complete = "4.6.5"
