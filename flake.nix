@@ -55,8 +55,8 @@
             lockFile = ./Cargo.lock;
           };
 
-          NOM_PATH = "${pkgs.lib.getExe pkgs.nix-output-monitor}";
-          NIXOS_REBUILD_PATH = "${pkgs.lib.getExe pkgs.nixos-rebuild-ng}";
+          NOM_PATH = pkgs.lib.getExe pkgs.nix-output-monitor;
+          NIXOS_REBUILD_PATH = pkgs.lib.getExe pkgs.nixos-rebuild-ng;
 
           postInstall = ''
             ls target/completions/*
@@ -87,6 +87,7 @@
           environment.systemPackages = [
             (self.packages."${pkgs.stdenv.hostPlatform.system}".default.overrideAttrs {
               NIXOS_REBUILD_PATH = lib.getExe config.system.build.nixos-rebuild;
+              NOM_PATH = lib.getExe pkgs.nix-output-monitor;
             })
           ];
         };
